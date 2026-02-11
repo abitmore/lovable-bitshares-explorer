@@ -57,6 +57,24 @@ export function useAccountHistory(accountId: string | undefined) {
   });
 }
 
+export function useBlockHeaders(blockNums: number[]) {
+  return useQuery({
+    queryKey: ["blockHeaders", blockNums],
+    queryFn: async () => {
+      const results: Record<number, string> = {};
+      await Promise.all(
+        blockNums.map(async (num) => {
+          const header = await api.getBlockHeader(num);
+          if (header?.timestamp) results[num] = header.timestamp;
+        })
+      );
+      return results;
+    },
+    enabled: blockNums.length > 0,
+  });
+}
+
+
 export function useObjects(ids: string[]) {
   return useQuery({
     queryKey: ["objects", ids],

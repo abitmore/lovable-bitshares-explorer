@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useAccountByName, useAccountBalances, useAccountHistory, useAssets, useObjects } from "@/hooks/use-bitshares";
+import { useAccountByName, useAccountBalances, useAccountHistory, useAssets, useObjects, useBlockHeaders } from "@/hooks/use-bitshares";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -28,6 +28,23 @@ export default function AccountPage() {
     if (!history || history.length === 0) return undefined;
     return history.map((entry: any) => entry.op as [number, any]);
   }, [history]);
+
+  // Extract unique block numbers for timestamp fetching
+  const blockNums = useMemo(() => {
+    if (!history) return [];
+    return [...new Set(history.map((entry: any) => entry.block_num as number))] as number[];
+  }, [history]);
+
+  const { data: blockHeaders } = useBlockHeaders(blockNums);
+
+  // Build metadata array matching operations
+  const operationMeta = useMemo(() => {
+    if (!history) return undefined;
+    return history.map((entry: any) => ({
+      block_num: entry.block_num as number,
+      timestamp: blockHeaders?.[entry.block_num]?.replace("T", " "),
+    }));
+  }, [history, blockHeaders]);
 
   return (
     <div className="space-y-6">
@@ -88,7 +105,7 @@ export default function AccountPage() {
           {operations && operations.length > 0 && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold">Recent Activity</h2>
-              <OperationCards operations={operations} />
+              <OperationCards operations={operations} meta={operationMeta} />
             </div>
           )}
         </div>

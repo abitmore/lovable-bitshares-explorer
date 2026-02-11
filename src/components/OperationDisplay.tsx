@@ -178,30 +178,41 @@ export function useResolvedOperations(operations: [number, any][] | undefined) {
 }
 
 /** Render a list of operations as cards */
-export function OperationCards({ operations }: { operations: [number, any][] }) {
+export function OperationCards({ operations, meta }: { operations: [number, any][]; meta?: { block_num: number; timestamp?: string }[] }) {
   const { accounts, assets } = useResolvedOperations(operations);
 
   return (
     <>
-      {operations.map((op, opIdx) => (
-        <Card key={opIdx}>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <span className="text-muted-foreground">{OP_ICONS[op[0]]}</span>
-              {OP_NAMES[op[0]] ?? `Operation Type ${op[0]}`}
-              <Badge variant="secondary" className="text-xs ml-auto">#{opIdx}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <OperationDetail opType={op[0]} opData={op[1]} accounts={accounts} assets={assets} />
-            {op[1].fee && (
-              <div className="text-xs text-muted-foreground pt-2 border-t border-border">
-                Fee: <AssetAmount amount={op[1].fee.amount} assetId={op[1].fee.asset_id} assets={assets} />
+      {operations.map((op, opIdx) => {
+        const m = meta?.[opIdx];
+        return (
+          <Card key={opIdx}>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <span className="text-muted-foreground">{OP_ICONS[op[0]]}</span>
+                {OP_NAMES[op[0]] ?? `Operation Type ${op[0]}`}
+                <Badge variant="secondary" className="text-xs ml-auto">#{opIdx}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <OperationDetail opType={op[0]} opData={op[1]} accounts={accounts} assets={assets} />
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground pt-2 border-t border-border">
+                {op[1].fee && (
+                  <span>Fee: <AssetAmount amount={op[1].fee.amount} assetId={op[1].fee.asset_id} assets={assets} /></span>
+                )}
+                {m && (
+                  <>
+                    <Link to={`/block/${m.block_num}`} className="text-primary hover:underline">
+                      Block #{m.block_num.toLocaleString()}
+                    </Link>
+                    {m.timestamp && <span>{m.timestamp}</span>}
+                  </>
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        );
+      })}
     </>
   );
 }
