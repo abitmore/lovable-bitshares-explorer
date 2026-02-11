@@ -2,16 +2,15 @@ import { useParams, Link } from "react-router-dom";
 import { useAccountByName, useAccountBalances, useAccountHistory, useAssets, useObjects } from "@/hooks/use-bitshares";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAccountByName } from "@/lib/bitshares-api";
-import { useQuery } from "@tanstack/react-query";
 import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
+import { OperationCards } from "@/components/OperationDisplay";
+import { useMemo } from "react";
 
 export default function AccountPage() {
   const { accountName } = useParams();
 
-  // Support both name and ID (1.2.x)
   const isId = accountName?.startsWith("1.2.");
   const { data: objectData } = useObjects(isId ? [accountName!] : []);
   const resolvedName = isId ? objectData?.[0]?.name : accountName;
@@ -19,11 +18,16 @@ export default function AccountPage() {
   const { data: account, isLoading } = useAccountByName(resolvedName);
   const { data: balances } = useAccountBalances(account?.id);
 
-  // Get asset details for balances
   const assetIds = balances?.map((b: any) => b.asset_id) ?? [];
   const { data: assets } = useAssets(assetIds);
 
   const { data: history } = useAccountHistory(account?.id);
+
+  // Convert history entries to operations format for OperationCards
+  const operations = useMemo(() => {
+    if (!history || history.length === 0) return undefined;
+    return history.map((entry: any) => entry.op as [number, any]);
+  }, [history]);
 
   return (
     <div className="space-y-6">
@@ -81,25 +85,11 @@ export default function AccountPage() {
             </Card>
           )}
 
-          {history && history.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle className="text-lg">Recent Activity</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {history.map((entry: any, i: number) => (
-                    <div key={i} className="p-2 border border-border rounded text-sm">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Op Type: {entry.op?.[0]}</span>
-                        <span className="text-muted-foreground text-xs">{entry.id}</span>
-                      </div>
-                      <pre className="text-xs font-mono bg-muted p-2 rounded mt-1 overflow-auto max-h-32">
-                        {JSON.stringify(entry.op?.[1], null, 2)}
-                      </pre>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          {operations && operations.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Recent Activity</h2>
+              <OperationCards operations={operations} />
+            </div>
           )}
         </div>
       )}

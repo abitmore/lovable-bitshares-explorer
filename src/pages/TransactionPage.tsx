@@ -5,33 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
-
-const OP_NAMES: Record<number, string> = {
-  0: "Transfer",
-  1: "Limit Order Create",
-  2: "Limit Order Cancel",
-  3: "Call Order Update",
-  4: "Fill Order",
-  5: "Account Create",
-  6: "Account Update",
-  7: "Account Whitelist",
-  8: "Account Upgrade",
-  9: "Account Transfer",
-  10: "Asset Create",
-  11: "Asset Update",
-  12: "Asset Update Bitasset",
-  13: "Asset Update Feed Producers",
-  14: "Asset Issue",
-  15: "Asset Reserve",
-  16: "Asset Fund Fee Pool",
-  17: "Asset Settle",
-  18: "Asset Global Settle",
-  19: "Asset Publish Feed",
-  22: "Proposal Create",
-  23: "Proposal Update",
-  33: "Vesting Balance Withdraw",
-  37: "Balance Claim",
-};
+import { OperationCards } from "@/components/OperationDisplay";
 
 export default function TransactionPage() {
   const { blockNum, txIndex } = useParams();
@@ -77,20 +51,7 @@ export default function TransactionPage() {
             </CardContent>
           </Card>
 
-          {tx.operations?.map((op: [number, any], opIdx: number) => (
-            <Card key={opIdx}>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  {OP_NAMES[op[0]] ?? `Operation Type ${op[0]}`}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="text-xs font-mono bg-muted p-3 rounded-md overflow-auto max-h-64">
-                  {JSON.stringify(op[1], null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          ))}
+          {tx.operations && <OperationCards operations={tx.operations} />}
         </div>
       )}
     </div>
