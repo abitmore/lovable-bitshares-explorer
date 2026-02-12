@@ -1,11 +1,12 @@
 import { useParams, Link } from "react-router-dom";
-import { useBlock } from "@/hooks/use-bitshares";
+import { useBlock, useTransactionIds } from "@/hooks/use-bitshares";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { OperationCards } from "@/components/OperationDisplay";
+import { useMemo } from "react";
 
 export default function TransactionPage() {
   const { blockNum, txIndex } = useParams();
@@ -14,6 +15,9 @@ export default function TransactionPage() {
   const { data: block, isLoading } = useBlock(num || undefined);
 
   const tx = block?.transactions?.[idx];
+  const singleTx = useMemo(() => tx ? [tx] : undefined, [tx]);
+  const { data: txIds } = useTransactionIds(singleTx);
+  const txId = txIds?.[0];
 
   return (
     <div className="space-y-6">
@@ -37,9 +41,15 @@ export default function TransactionPage() {
         <p className="text-muted-foreground">Transaction not found</p>
       ) : (
         <div className="space-y-4">
-          <Card>
+           <Card>
             <CardHeader><CardTitle className="text-lg">Transaction Info</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
+              {txId && (
+                <div className="flex flex-col sm:flex-row gap-1">
+                  <span className="font-medium text-muted-foreground w-48 shrink-0">TXID</span>
+                  <span className="font-mono text-xs break-all">{txId}</span>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row gap-1">
                 <span className="font-medium text-muted-foreground w-48 shrink-0">Block</span>
                 <Link to={`/block/${num}`} className="text-primary hover:underline">#{num}</Link>

@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import * as api from "@/lib/bitshares-api";
 
+// ... keep existing code (all existing hooks)
+
 export function useDynamicGlobalProperties() {
   return useQuery({
     queryKey: ["dgp"],
@@ -74,11 +76,22 @@ export function useBlockHeaders(blockNums: number[]) {
   });
 }
 
-
 export function useObjects(ids: string[]) {
   return useQuery({
     queryKey: ["objects", ids],
     queryFn: () => api.getObjects(ids),
     enabled: ids.length > 0,
+  });
+}
+
+/** Compute TXIDs for all transactions in a block */
+export function useTransactionIds(transactions: any[] | undefined) {
+  return useQuery({
+    queryKey: ["txids", transactions?.map((t: any) => t.signatures?.[0]?.substring(0, 16))],
+    queryFn: async () => {
+      if (!transactions) return [];
+      return Promise.all(transactions.map((tx: any) => api.computeTransactionId(tx)));
+    },
+    enabled: !!transactions && transactions.length > 0,
   });
 }

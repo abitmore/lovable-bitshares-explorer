@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useBlock } from "@/hooks/use-bitshares";
+import { useBlock, useTransactionIds } from "@/hooks/use-bitshares";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ export default function BlockPage() {
   const { blockNum } = useParams();
   const num = Number(blockNum);
   const { data: block, isLoading, error } = useBlock(num || undefined);
+  const { data: txIds } = useTransactionIds(block?.transactions);
 
   if (!num) return <p className="text-destructive">Invalid block number</p>;
 
@@ -76,7 +77,12 @@ export default function BlockPage() {
                     className="block p-3 border border-border rounded-lg hover:bg-accent transition-colors"
                   >
                     <div className="flex justify-between items-center">
-                      <span className="font-mono text-sm text-primary">TX #{idx}</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="font-mono text-sm text-primary">TX #{idx}</span>
+                        {txIds?.[idx] && (
+                          <span className="font-mono text-xs text-muted-foreground">{txIds[idx]}</span>
+                        )}
+                      </div>
                       <span className="text-sm text-muted-foreground">
                         {tx.operations?.length ?? 0} operations
                       </span>

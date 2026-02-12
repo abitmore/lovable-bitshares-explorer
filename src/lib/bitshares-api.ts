@@ -138,6 +138,47 @@ export async function getTransaction(blockNum: number, trxInBlock: number) {
   return dbCall("get_transaction", [blockNum, trxInBlock]);
 }
 
+export async function getTransactionHex(tx: any): Promise<string> {
+  return dbCall("get_transaction_hex", [tx]);
+}
+
+// ---- TXID computation ----
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Compute the TXID from a transaction object by:
+ * 1. Getting the signed_transaction hex via API
+ * 2. Stripping the signatures suffix (varint + 65-byte sigs)
+ * 3. SHA-256 hashing the transaction-only bytes
+ * 4. Taking the first 20 bytes (40 hex chars) as the TXID
+ */
+export async function computeTransactionId(tx: any): Promise<string> {
+  const hex = await getTransactionHex(tx);
+
+  // signed_transaction = transaction_bytes + varint(num_sigs) + signatures
+  // Each signature is 65 bytes = 130 hex chars
+  const numSigs = tx.signatures?.length ?? 0;
+  // varint: for values < 128 it's 1 byte
+  const varintLen = numSigs < 128 ? 1 : 2;
+  const suffixHexLen = varintLen * 2 + numSigs * 130;
+  const txHex = hex.substring(0, hex.length - suffixHexLen);
+
+  const txBytes = hexToBytes(txHex);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", txBytes.buffer as ArrayBuffer);
+  return bytesToHex(new Uint8Array(hashBuffer)).substring(0, 40);
+}
+
 export async function getAccountHistory(
   accountId: string,
   stop: string = "1.11.0",
