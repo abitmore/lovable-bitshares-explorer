@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useAccountByName, useAccountBalances, useAccountHistory, useAssets, useObjects, useBlockHeaders } from "@/hooks/use-bitshares";
+import { useAccountByName, useAccountBalances, useAccountHistory, useAssets, useObjects } from "@/hooks/use-bitshares";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -29,22 +29,14 @@ export default function AccountPage() {
     return history.map((entry: any) => entry.op as [number, any]);
   }, [history]);
 
-  // Extract unique block numbers for timestamp fetching
-  const blockNums = useMemo(() => {
-    if (!history) return [];
-    return [...new Set(history.map((entry: any) => entry.block_num as number))] as number[];
-  }, [history]);
-
-  const { data: blockHeaders } = useBlockHeaders(blockNums);
-
-  // Build metadata array matching operations
+  // Build metadata from history entries (block_time is included in API response)
   const operationMeta = useMemo(() => {
     if (!history) return undefined;
     return history.map((entry: any) => ({
       block_num: entry.block_num as number,
-      timestamp: blockHeaders?.[entry.block_num]?.replace("T", " "),
+      timestamp: entry.block_time?.replace("T", " "),
     }));
-  }, [history, blockHeaders]);
+  }, [history]);
 
   return (
     <div className="space-y-6">
