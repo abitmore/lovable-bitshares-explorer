@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { detectSearchType } from "@/lib/bitshares-api";
+import { detectSearchType, searchTransactionById } from "@/lib/bitshares-api";
+import { toast } from "sonner";
 
 interface SearchBarProps {
   compact?: boolean;
@@ -11,9 +12,10 @@ interface SearchBarProps {
 
 export function SearchBar({ compact }: SearchBarProps) {
   const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
     if (!trimmed) return;
@@ -29,8 +31,22 @@ export function SearchBar({ compact }: SearchBarProps) {
       case "asset":
         navigate(`/asset/${trimmed}`);
         break;
+      case "txid":
+        setSearching(true);
+        try {
+          const result = await searchTransactionById(trimmed);
+          if (result) {
+            navigate(`/block/${result.block_num}/tx/${result.trx_in_block}`);
+          } else {
+            toast.error("Transaction not found");
+          }
+        } catch {
+          toast.error("Failed to search for transaction");
+        } finally {
+          setSearching(false);
+        }
+        break;
       case "object":
-        // Try to route based on object type
         if (trimmed.startsWith("1.2.")) navigate(`/account/${trimmed}`);
         else if (trimmed.startsWith("1.3.")) navigate(`/asset/${trimmed}`);
         else navigate(`/account/${trimmed}`);
@@ -44,10 +60,10 @@ export function SearchBar({ compact }: SearchBarProps) {
       <Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder={compact ? "Search..." : "Search by block #, account name, or asset symbol..."}
+        placeholder={compact ? "Search..." : "Search by block #, account, asset, or TXID..."}
         className={compact ? "h-9" : "h-12 text-base"}
       />
-      <Button type="submit" size={compact ? "sm" : "lg"} variant="default">
+      <Button type="submit" size={compact ? "sm" : "lg"} variant="default" disabled={searching}>
         <Search className="h-4 w-4" />
       </Button>
     </form>

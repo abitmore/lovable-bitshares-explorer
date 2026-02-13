@@ -188,12 +188,36 @@ export async function getAccountHistory(
   return historyCall("get_account_history", [accountId, stop, limit, start]);
 }
 
+// ---- ElasticSearch API ----
+
+const ES_URL = "https://es.bitshares.dev/bitshares-*";
+
+export async function searchTransactionById(txid: string): Promise<{ block_num: number; trx_in_block: number } | null> {
+  const resp = await fetch(`${ES_URL}/_search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: { bool: { must: [{ match: { "block_data.trx_id.keyword": { query: txid } } }] } },
+      size: 1,
+    }),
+  });
+  if (!resp.ok) return null;
+  const data = await resp.json();
+  const hit = data.hits?.hits?.[0]?._source;
+  if (!hit) return null;
+  return {
+    block_num: hit.block_data?.block_num,
+    trx_in_block: hit.operation_history?.trx_in_block ?? 0,
+  };
+}
+
 // ---- Search helpers ----
 
-export function detectSearchType(query: string): "block" | "account" | "asset" | "object" {
+export function detectSearchType(query: string): "block" | "account" | "asset" | "object" | "txid" {
   const trimmed = query.trim();
   if (/^\d+$/.test(trimmed)) return "block";
   if (/^1\.\d+\.\d+$/.test(trimmed)) return "object";
+  if (/^[0-9a-f]{40}$/i.test(trimmed)) return "txid";
   // Uppercase likely asset, lowercase likely account
   if (trimmed === trimmed.toUpperCase() && /^[A-Z]/.test(trimmed)) return "asset";
   return "account";
