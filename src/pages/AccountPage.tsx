@@ -34,6 +34,7 @@ export default function AccountPage() {
     if (!history) return undefined;
     return history.map((entry: any) => ({
       block_num: entry.block_num as number,
+      trx_in_block: entry.trx_in_block as number,
       timestamp: entry.block_time?.replace("T", " "),
     }));
   }, [history]);

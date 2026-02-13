@@ -178,7 +178,7 @@ export function useResolvedOperations(operations: [number, any][] | undefined) {
 }
 
 /** Render a list of operations as cards */
-export function OperationCards({ operations, meta }: { operations: [number, any][]; meta?: { block_num: number; timestamp?: string }[] }) {
+export function OperationCards({ operations, meta }: { operations: [number, any][]; meta?: { block_num: number; trx_in_block?: number; timestamp?: string }[] }) {
   const { accounts, assets } = useResolvedOperations(operations);
 
   return (
@@ -205,6 +205,14 @@ export function OperationCards({ operations, meta }: { operations: [number, any]
                     <Link to={`/block/${m.block_num}`} className="text-primary hover:underline">
                       Block #{m.block_num.toLocaleString()}
                     </Link>
+                    {m.trx_in_block != null && (
+                      <>
+                        <span>·</span>
+                        <Link to={`/block/${m.block_num}/tx/${m.trx_in_block}`} className="text-primary hover:underline">
+                          Tx #{m.trx_in_block}
+                        </Link>
+                      </>
+                    )}
                     {m.timestamp && <span>{m.timestamp}</span>}
                   </>
                 )}
