@@ -1,6 +1,15 @@
 // BitShares WebSocket JSON-RPC API client
 
+import { z } from "zod";
+import { EsSearchResponseSchema } from "@/lib/validation";
+
 const WS_URL = "wss://api.bitshares.dev";
+
+const WsMessageSchema = z.object({
+  id: z.number(),
+  result: z.any().optional(),
+  error: z.any().optional(),
+});
 
 let ws: WebSocket | null = null;
 let requestId = 0;
@@ -31,7 +40,8 @@ function connect(): Promise<void> {
 
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
+        const raw = JSON.parse(event.data);
+        const data = WsMessageSchema.parse(raw);
         const pending = pendingRequests.get(data.id);
         if (pending) {
           pendingRequests.delete(data.id);
@@ -42,7 +52,7 @@ function connect(): Promise<void> {
           }
         }
       } catch {
-        // ignore parse errors
+        // ignore parse/validation errors
       }
     };
 
@@ -202,11 +212,13 @@ export async function searchTransactionById(txid: string): Promise<{ block_num: 
     }),
   });
   if (!resp.ok) return null;
-  const data = await resp.json();
-  const hit = data.hits?.hits?.[0]?._source;
+  const raw = await resp.json();
+  const parsed = EsSearchResponseSchema.safeParse(raw);
+  if (!parsed.success) return null;
+  const hit = parsed.data.hits.hits[0]?._source;
   if (!hit) return null;
   return {
-    block_num: hit.block_data?.block_num,
+    block_num: hit.block_data.block_num,
     trx_in_block: hit.operation_history?.trx_in_block ?? 0,
   };
 }

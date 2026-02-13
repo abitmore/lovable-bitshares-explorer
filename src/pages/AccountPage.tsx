@@ -7,15 +7,18 @@ import {
 } from "@/components/ui/breadcrumb";
 import { OperationCards } from "@/components/OperationDisplay";
 import { useMemo } from "react";
+import { AccountNameSchema, AccountIdSchema } from "@/lib/validation";
 
 export default function AccountPage() {
   const { accountName } = useParams();
 
-  const isId = accountName?.startsWith("1.2.");
+  const isId = AccountIdSchema.safeParse(accountName).success;
+  const isValidName = isId || AccountNameSchema.safeParse(accountName).success;
+
   const { data: objectData } = useObjects(isId ? [accountName!] : []);
   const resolvedName = isId ? objectData?.[0]?.name : accountName;
 
-  const { data: account, isLoading } = useAccountByName(resolvedName);
+  const { data: account, isLoading } = useAccountByName(isValidName ? resolvedName : undefined);
   const { data: balances } = useAccountBalances(account?.id);
 
   const assetIds = balances?.map((b: any) => b.asset_id) ?? [];
@@ -38,6 +41,10 @@ export default function AccountPage() {
       timestamp: entry.block_time?.replace("T", " "),
     }));
   }, [history]);
+
+  if (!isValidName) {
+    return <p className="text-destructive">Invalid account name</p>;
+  }
 
   return (
     <div className="space-y-6">

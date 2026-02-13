@@ -5,16 +5,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
+import { AssetSymbolSchema, AssetIdSchema } from "@/lib/validation";
 
 export default function AssetPage() {
   const { assetSymbol } = useParams();
 
-  // Support both symbol and ID (1.3.x)
-  const isId = assetSymbol?.startsWith("1.3.");
+  const isId = AssetIdSchema.safeParse(assetSymbol).success;
+  const isValid = isId || AssetSymbolSchema.safeParse(assetSymbol).success;
+
   const { data: objectData } = useObjects(isId ? [assetSymbol!] : []);
   const resolvedSymbol = isId ? objectData?.[0]?.symbol : assetSymbol;
 
-  const { data: asset, isLoading } = useAssetBySymbol(resolvedSymbol?.toUpperCase());
+  const { data: asset, isLoading } = useAssetBySymbol(isValid ? resolvedSymbol?.toUpperCase() : undefined);
+
+  if (!isValid) {
+    return <p className="text-destructive">Invalid asset symbol</p>;
+  }
 
   const precision = asset?.precision ?? 0;
   const maxSupply = asset?.options?.max_supply

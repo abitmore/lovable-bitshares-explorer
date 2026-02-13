@@ -12,14 +12,16 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
+import { BlockNumSchema } from "@/lib/validation";
 
 export default function BlockPage() {
   const { blockNum } = useParams();
-  const num = Number(blockNum);
+  const parsed = BlockNumSchema.safeParse(blockNum);
+  const num = parsed.success ? parsed.data : 0;
   const { data: block, isLoading, error } = useBlock(num || undefined);
   const { data: txIds } = useTransactionIds(block?.transactions);
 
-  if (!num) return <p className="text-destructive">Invalid block number</p>;
+  if (!parsed.success) return <p className="text-destructive">Invalid block number</p>;
 
   return (
     <div className="space-y-6">

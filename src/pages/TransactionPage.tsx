@@ -7,17 +7,25 @@ import {
 } from "@/components/ui/breadcrumb";
 import { OperationCards } from "@/components/OperationDisplay";
 import { useMemo } from "react";
+import { BlockNumSchema, TxIndexSchema } from "@/lib/validation";
 
 export default function TransactionPage() {
   const { blockNum, txIndex } = useParams();
-  const num = Number(blockNum);
-  const idx = Number(txIndex);
-  const { data: block, isLoading } = useBlock(num || undefined);
+  const parsedBlock = BlockNumSchema.safeParse(blockNum);
+  const parsedTx = TxIndexSchema.safeParse(txIndex);
+  const num = parsedBlock.success ? parsedBlock.data : 0;
+  const idx = parsedTx.success ? parsedTx.data : 0;
+  const isValid = parsedBlock.success && parsedTx.success;
+  const { data: block, isLoading } = useBlock(isValid ? num : undefined);
 
   const tx = block?.transactions?.[idx];
   const singleTx = useMemo(() => tx ? [tx] : undefined, [tx]);
   const { data: txIds } = useTransactionIds(singleTx);
   const txId = txIds?.[0];
+
+  if (!isValid) {
+    return <p className="text-destructive">Invalid block number or transaction index</p>;
+  }
 
   return (
     <div className="space-y-6">
