@@ -201,6 +201,7 @@ export async function getAccountHistory(
 // ---- ElasticSearch API ----
 
 const ES_URL = "https://es.bitshares.dev/bitshares-*";
+const ES_URL_BALANCES = "https://es.bitshares.dev/objects-balance";
 
 export async function searchTransactionById(txid: string): Promise<{ block_num: number; trx_in_block: number } | null> {
   const resp = await fetch(`${ES_URL}/_search`, {
@@ -221,6 +222,29 @@ export async function searchTransactionById(txid: string): Promise<{ block_num: 
     block_num: hit.block_data.block_num,
     trx_in_block: hit.operation_history?.trx_in_block ?? 0,
   };
+}
+
+// ---- Asset holders via ES ----
+
+export async function getAssetHolders(assetId: string, limit: number = 20): Promise<{ account_id: string; balance: number }[]> {
+  const resp = await fetch(`${ES_URL_BALANCES}/_search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: { bool: { must: [{ match: { "asset_type": { query: assetId } } }] } },
+      track_total_hits: false,
+      size: limit,
+      sort: [{ balance: { order: "desc" } }],
+    }),
+  });
+  if (!resp.ok) return [];
+  const raw = await resp.json();
+  const hits = raw?.hits?.hits;
+  if (!Array.isArray(hits)) return [];
+  return hits.map((h: any) => ({
+    account_id: h._source?.owner_ ?? "",
+    balance: Number(h._source?.balance ?? 0),
+  }));
 }
 
 // ---- Search helpers ----

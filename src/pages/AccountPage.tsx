@@ -24,6 +24,13 @@ export default function AccountPage() {
   const assetIds = balances?.map((b: any) => b.asset_id) ?? [];
   const { data: assets } = useAssets(assetIds);
 
+  const registrarId = account?.registrar as string | undefined;
+  const referrerId = account?.referrer as string | undefined;
+  const idsToResolve = [registrarId, referrerId].filter(Boolean) as string[];
+  const { data: resolvedAccounts } = useObjects(idsToResolve.length > 0 ? idsToResolve : []);
+  const nameMap = new Map<string, string>();
+  resolvedAccounts?.forEach((a: any) => { if (a?.id && a?.name) nameMap.set(a.id, a.name); });
+
   const { data: history } = useAccountHistory(account?.id);
 
   // Convert history entries to operations format for OperationCards
@@ -71,8 +78,8 @@ export default function AccountPage() {
             <CardContent className="space-y-2 text-sm">
               <InfoRow label="Name" value={account.name} />
               <InfoRow label="ID" value={account.id} />
-              <InfoRow label="Registrar" value={account.registrar} />
-              <InfoRow label="Referrer" value={account.referrer} />
+              <InfoRow label="Registrar" value={nameMap.get(account.registrar) ?? account.registrar} link={`/account/${nameMap.get(account.registrar) ?? account.registrar}`} />
+              <InfoRow label="Referrer" value={nameMap.get(account.referrer) ?? account.referrer} link={`/account/${nameMap.get(account.referrer) ?? account.referrer}`} />
               <InfoRow label="Membership Expiration" value={account.membership_expiration_date?.replace("T", " ")} />
             </CardContent>
           </Card>
@@ -114,11 +121,15 @@ export default function AccountPage() {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value?: string }) {
+function InfoRow({ label, value, link }: { label: string; value?: string; link?: string }) {
   return (
     <div className="flex flex-col sm:flex-row gap-1">
       <span className="font-medium text-muted-foreground w-48 shrink-0">{label}</span>
-      <span className="break-all">{value ?? "—"}</span>
+      {link ? (
+        <Link to={link} className="text-primary hover:underline break-all">{value}</Link>
+      ) : (
+        <span className="break-all">{value ?? "—"}</span>
+      )}
     </div>
   );
 }

@@ -43,6 +43,14 @@ export function useAssets(ids: string[]) {
   });
 }
 
+export function useAccounts(ids: string[]) {
+  return useQuery({
+    queryKey: ["accounts", ids],
+    queryFn: () => api.getAccounts(ids),
+    enabled: ids.length > 0,
+  });
+}
+
 export function useAssetBySymbol(symbol: string | undefined) {
   return useQuery({
     queryKey: ["assetSymbol", symbol],
@@ -93,5 +101,13 @@ export function useTransactionIds(transactions: any[] | undefined) {
       return Promise.all(transactions.map((tx: any) => api.computeTransactionId(tx)));
     },
     enabled: !!transactions && transactions.length > 0,
+  });
+}
+
+export function useAssetHolders(assetId: string | undefined) {
+  return useQuery({
+    queryKey: ["assetHolders", assetId],
+    queryFn: () => api.getAssetHolders(assetId!),
+    enabled: !!assetId,
   });
 }
