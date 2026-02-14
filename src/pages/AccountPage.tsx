@@ -46,6 +46,7 @@ export default function AccountPage() {
       block_num: entry.block_num as number,
       trx_in_block: entry.trx_in_block as number,
       timestamp: entry.block_time?.replace("T", " "),
+      is_virtual: !!entry.is_virtual,
     }));
   }, [history]);
 

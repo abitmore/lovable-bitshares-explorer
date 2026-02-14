@@ -96,19 +96,21 @@ export function useResolvedOperations(operations: [number, any][] | undefined) {
 }
 
 /** Render a list of operations as cards */
-export function OperationCards({ operations, meta }: { operations: [number, any][]; meta?: { block_num: number; trx_in_block?: number; timestamp?: string }[] }) {
+export function OperationCards({ operations, meta }: { operations: [number, any][]; meta?: { block_num: number; trx_in_block?: number; timestamp?: string; is_virtual?: boolean }[] }) {
   const { accounts, assets } = useResolvedOperations(operations);
 
   return (
     <>
       {operations.map((op, opIdx) => {
         const m = meta?.[opIdx];
+        const isVirtual = m?.is_virtual;
         return (
-          <Card key={opIdx}>
+          <Card key={opIdx} className={isVirtual ? "border-dashed border-muted-foreground/40 opacity-80" : ""}>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <span className="text-muted-foreground">{OP_ICONS[op[0]]}</span>
                 {OP_NAMES[op[0]] ?? `Operation Type ${op[0]}`}
+                {isVirtual && <Badge variant="outline" className="text-xs text-muted-foreground">Virtual</Badge>}
                 <Badge variant="secondary" className="text-xs ml-auto">#{opIdx}</Badge>
               </CardTitle>
             </CardHeader>
