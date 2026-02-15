@@ -56,7 +56,7 @@ export function SearchBar({ compact }: SearchBarProps) {
       case "object":
         if (trimmed.startsWith("1.2.")) navigate(`/account/${trimmed}`);
         else if (trimmed.startsWith("1.3.")) navigate(`/asset/${trimmed}`);
-        else navigate(`/account/${trimmed}`);
+        else navigate(`/object/${trimmed}`);
         break;
     }
     setQuery("");

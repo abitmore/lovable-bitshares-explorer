@@ -9,6 +9,7 @@ import BlockPage from "./pages/BlockPage";
 import TransactionPage from "./pages/TransactionPage";
 import AccountPage from "./pages/AccountPage";
 import AssetPage from "./pages/AssetPage";
+import ObjectPage from "./pages/ObjectPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/block/:blockNum/tx/:txIndex" element={<TransactionPage />} />
             <Route path="/account/:accountName" element={<AccountPage />} />
             <Route path="/asset/:assetSymbol" element={<AssetPage />} />
+            <Route path="/object/:objectId" element={<ObjectPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
