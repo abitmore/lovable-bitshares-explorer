@@ -203,25 +203,37 @@ export async function getAccountHistory(
 const ES_URL = "https://es.bitshares.dev/bitshares-*";
 const ES_URL_BALANCES = "https://es.bitshares.dev/objects-balance";
 
-export async function searchTransactionById(txid: string): Promise<{ block_num: number; trx_in_block: number } | null> {
+export async function searchTransactionById(txid: string): Promise<{ block_num: number; trx_in_block: number; txid: string; operations: { op: [number, any]; is_virtual: boolean }[] } | null> {
   const resp = await fetch(`${ES_URL}/_search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       query: { bool: { must: [{ match: { "block_data.trx_id.keyword": { query: txid } } }] } },
-      size: 1,
+      track_total_hits: false,
+      collapse: { field: "operation_id_num" },
+      sort: ["operation_id_num"],
+      size: 100,
     }),
   });
   if (!resp.ok) return null;
   const raw = await resp.json();
-  const parsed = EsSearchResponseSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  const hit = parsed.data.hits.hits[0]?._source;
-  if (!hit) return null;
-  return {
-    block_num: hit.block_data.block_num,
-    trx_in_block: hit.operation_history?.trx_in_block ?? 0,
-  };
+  const hits = raw?.hits?.hits;
+  if (!Array.isArray(hits) || hits.length === 0) return null;
+  const firstHit = hits[0]?._source;
+  const block_num = firstHit?.block_data?.block_num;
+  const trx_in_block = firstHit?.operation_history?.trx_in_block ?? 0;
+  if (block_num == null) return null;
+  const operations = hits.map((h: any) => {
+    const opStr = h._source?.operation_history?.op;
+    let op: [number, any] = [0, {}];
+    if (typeof opStr === "string") {
+      try { op = JSON.parse(opStr); } catch {}
+    } else if (Array.isArray(opStr)) {
+      op = opStr as [number, any];
+    }
+    return { op, is_virtual: !!h._source?.operation_history?.is_virtual };
+  });
+  return { block_num, trx_in_block, txid, operations };
 }
 
 // ---- Transaction operations via ES ----

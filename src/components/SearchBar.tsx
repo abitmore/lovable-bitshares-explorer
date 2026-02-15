@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ export function SearchBar({ compact }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +38,11 @@ export function SearchBar({ compact }: SearchBarProps) {
         try {
           const result = await searchTransactionById(trimmed);
           if (result) {
+            // Pre-populate the react-query cache so TransactionPage renders instantly
+            queryClient.setQueryData(
+              ["txOpsES", result.block_num, result.trx_in_block],
+              { txid: result.txid, operations: result.operations }
+            );
             navigate(`/block/${result.block_num}/tx/${result.trx_in_block}`);
           } else {
             toast.error("Transaction not found");
