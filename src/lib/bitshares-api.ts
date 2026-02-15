@@ -224,6 +224,41 @@ export async function searchTransactionById(txid: string): Promise<{ block_num: 
   };
 }
 
+// ---- Transaction operations via ES ----
+
+export async function getTransactionOperationsES(blockNum: number, trxInBlock: number): Promise<{ txid: string; operations: { op: [number, any]; is_virtual: boolean }[] }> {
+  const resp = await fetch(`${ES_URL}/_search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: { bool: { must: [
+        { match: { "block_data.block_num": { query: blockNum } } },
+        { match: { "operation_history.trx_in_block": { query: trxInBlock } } },
+      ] } },
+      track_total_hits: false,
+      collapse: { field: "operation_id_num" },
+      sort: ["operation_id_num"],
+      size: 100,
+    }),
+  });
+  if (!resp.ok) return { txid: "", operations: [] };
+  const raw = await resp.json();
+  const hits = raw?.hits?.hits;
+  if (!Array.isArray(hits) || hits.length === 0) return { txid: "", operations: [] };
+  const txid = hits[0]?._source?.block_data?.trx_id ?? "";
+  const operations = hits.map((h: any) => {
+    const opStr = h._source?.operation_history?.op;
+    let op: [number, any] = [0, {}];
+    if (typeof opStr === "string") {
+      try { op = JSON.parse(opStr); } catch {}
+    } else if (Array.isArray(opStr)) {
+      op = opStr as [number, any];
+    }
+    return { op, is_virtual: !!h._source?.operation_history?.is_virtual };
+  });
+  return { txid, operations };
+}
+
 // ---- Asset holders via ES ----
 
 export async function getAssetHolders(assetId: string, limit: number = 20): Promise<{ account_id: string; balance: number }[]> {

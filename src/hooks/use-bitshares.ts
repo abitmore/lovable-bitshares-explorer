@@ -111,3 +111,11 @@ export function useAssetHolders(assetId: string | undefined) {
     enabled: !!assetId,
   });
 }
+
+export function useTransactionOperationsES(blockNum: number | undefined, trxInBlock: number | undefined) {
+  return useQuery({
+    queryKey: ["txOpsES", blockNum, trxInBlock],
+    queryFn: () => api.getTransactionOperationsES(blockNum!, trxInBlock!),
+    enabled: blockNum != null && trxInBlock != null,
+  });
+}
