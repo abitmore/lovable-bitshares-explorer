@@ -67,7 +67,7 @@ export function SearchBar({ compact }: SearchBarProps) {
       <Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder={compact ? "Search..." : "Search by block #, account, asset, or TXID..."}
+        placeholder={compact ? "Search..." : "Search by block #, account, asset, object ID, or TXID..."}
         className={compact ? "h-9" : "h-12 text-base"}
       />
       <Button type="submit" size={compact ? "sm" : "lg"} variant="default" disabled={searching}>

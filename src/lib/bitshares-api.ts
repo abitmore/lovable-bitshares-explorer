@@ -299,7 +299,7 @@ export async function getAssetHolders(assetId: string, limit: number = 20): Prom
 export function detectSearchType(query: string): "block" | "account" | "asset" | "object" | "txid" {
   const trimmed = query.trim();
   if (/^\d+$/.test(trimmed)) return "block";
-  if (/^1\.\d+\.\d+$/.test(trimmed)) return "object";
+  if (/^\d+\.\d+\.\d+$/.test(trimmed)) return "object";
   if (/^[0-9a-f]{40}$/i.test(trimmed)) return "txid";
   // Uppercase likely asset, lowercase likely account
   if (trimmed === trimmed.toUpperCase() && /^[A-Z]/.test(trimmed)) return "asset";
