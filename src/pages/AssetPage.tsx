@@ -81,7 +81,15 @@ export default function AssetPage() {
               {currentSupply && <InfoRow label="Current Supply" value={currentSupply} />}
               <InfoRow label="Description" value={
                 asset.options?.description
-                  ? (() => { try { return JSON.parse(asset.options.description)?.main ?? asset.options.description; } catch { return asset.options.description; } })()
+                  ? (() => {
+                      try {
+                        const parsed = JSON.parse(asset.options.description);
+                        const main = parsed?.main;
+                        return typeof main === "string" ? main : asset.options.description;
+                      } catch {
+                        return asset.options.description;
+                      }
+                    })()
                   : "—"
               } />
             </CardContent>

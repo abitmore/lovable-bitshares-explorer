@@ -13,6 +13,7 @@ const WsMessageSchema = z.object({
 
 let ws: WebSocket | null = null;
 let requestId = 0;
+const MAX_PENDING_REQUESTS = 100;
 const pendingRequests = new Map<number, { resolve: (v: any) => void; reject: (e: any) => void }>();
 let connectPromise: Promise<void> | null = null;
 let dbApiId: number | null = null;
@@ -76,6 +77,10 @@ function rawCall(apiId: number, method: string, params: any[]): Promise<any> {
   return new Promise((resolve, reject) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       reject(new Error("WebSocket not connected"));
+      return;
+    }
+    if (pendingRequests.size >= MAX_PENDING_REQUESTS) {
+      reject(new Error("Too many pending requests"));
       return;
     }
     const id = ++requestId;
