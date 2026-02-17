@@ -67,6 +67,27 @@ export function useAccountHistory(accountId: string | undefined) {
   });
 }
 
+export function useAccountStatistics(accountId: string | undefined) {
+  const statsId = accountId ? `2.6.${accountId.split(".")[2]}` : undefined;
+  return useQuery({
+    queryKey: ["accountStats", statsId],
+    queryFn: () => api.getObjects([statsId!]).then((r: any[]) => r[0]),
+    enabled: !!statsId,
+  });
+}
+
+export function useRelativeAccountHistory(
+  accountId: string | undefined,
+  start: number,
+  limit: number
+) {
+  return useQuery({
+    queryKey: ["relativeAccountHistory", accountId, start, limit],
+    queryFn: () => api.getRelativeAccountHistory(accountId!, 0, limit, start),
+    enabled: !!accountId && start > 0,
+  });
+}
+
 export function useBlockHeaders(blockNums: number[]) {
   return useQuery({
     queryKey: ["blockHeaders", blockNums],

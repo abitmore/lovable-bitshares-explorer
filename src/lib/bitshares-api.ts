@@ -198,6 +198,15 @@ export async function getAccountHistory(
   return historyCall("get_account_history", [accountId, stop, limit, start]);
 }
 
+export async function getRelativeAccountHistory(
+  accountId: string,
+  stop: number = 0,
+  limit: number = 20,
+  start: number = 0
+) {
+  return historyCall("get_relative_account_history", [accountId, stop, limit, start]);
+}
+
 // ---- ElasticSearch API ----
 
 const ES_URL = "https://es.bitshares.dev/bitshares-*";
