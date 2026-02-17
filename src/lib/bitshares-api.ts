@@ -231,9 +231,11 @@ export async function searchTransactionById(txid: string): Promise<{ block_num: 
   });
   if (!resp.ok) return null;
   const raw = await resp.json();
-  const hits = raw?.hits?.hits;
-  if (!Array.isArray(hits) || hits.length === 0) return null;
-  const firstHit = hits[0]?._source;
+  const validated = EsSearchResponseSchema.safeParse(raw);
+  if (!validated.success) return null;
+  const hits = validated.data.hits.hits;
+  if (hits.length === 0) return null;
+  const firstHit = hits[0]._source;
   const block_num = firstHit?.block_data?.block_num;
   const trx_in_block = firstHit?.operation_history?.trx_in_block ?? 0;
   if (block_num == null) return null;
@@ -269,9 +271,11 @@ export async function getTransactionOperationsES(blockNum: number, trxInBlock: n
   });
   if (!resp.ok) return { txid: "", operations: [] };
   const raw = await resp.json();
-  const hits = raw?.hits?.hits;
-  if (!Array.isArray(hits) || hits.length === 0) return { txid: "", operations: [] };
-  const txid = hits[0]?._source?.block_data?.trx_id ?? "";
+  const validated = EsSearchResponseSchema.safeParse(raw);
+  if (!validated.success) return { txid: "", operations: [] };
+  const hits = validated.data.hits.hits;
+  if (hits.length === 0) return { txid: "", operations: [] };
+  const txid = String(hits[0]._source?.block_data?.trx_id ?? "");
   const operations = hits.map((h: any) => {
     const opStr = h._source?.operation_history?.op;
     let op: [number, any] = [0, {}];
