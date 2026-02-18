@@ -14,10 +14,12 @@ import {
 } from "@/components/ui/pagination";
 
 const PAGE_SIZE = 20;
+const BALANCE_PAGE_SIZE = 10;
 
 export default function AccountPage() {
   const { accountName } = useParams();
   const [currentPage, setCurrentPage] = useState(1);
+  const [balancePage, setBalancePage] = useState(1);
 
   const isId = AccountIdSchema.safeParse(accountName).success;
   const isValidName = isId || AccountNameSchema.safeParse(accountName).success;
@@ -111,30 +113,48 @@ export default function AccountPage() {
             </CardContent>
           </Card>
 
-          {balances && balances.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle className="text-lg">Balances</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {balances.map((bal: any, i: number) => {
-                    const asset = assets?.find((a: any) => a.id === bal.asset_id);
-                    const precision = asset?.precision ?? 0;
-                    const amount = (Number(bal.amount) / Math.pow(10, precision)).toLocaleString(undefined, {
-                      maximumFractionDigits: precision,
-                    });
-                    return (
-                      <div key={i} className="flex justify-between items-center p-2 rounded border border-border">
-                        <Link to={`/asset/${asset?.symbol ?? bal.asset_id}`} className="text-primary hover:underline font-medium">
-                          {asset?.symbol ?? bal.asset_id}
-                        </Link>
-                        <span className="font-mono">{amount}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {balances && balances.length > 0 && (() => {
+            const totalBalancePages = Math.ceil(balances.length / BALANCE_PAGE_SIZE);
+            const clampedBalancePage = Math.min(balancePage, totalBalancePages);
+            const startIdx = (clampedBalancePage - 1) * BALANCE_PAGE_SIZE;
+            const pagedBalances = balances.slice(startIdx, startIdx + BALANCE_PAGE_SIZE);
+            return (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Balances</CardTitle>
+                    {balances.length > BALANCE_PAGE_SIZE && (
+                      <span className="text-sm text-muted-foreground">{balances.length} assets</span>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {pagedBalances.map((bal: any, i: number) => {
+                      const asset = assets?.find((a: any) => a.id === bal.asset_id);
+                      const precision = asset?.precision ?? 0;
+                      const amount = (Number(bal.amount) / Math.pow(10, precision)).toLocaleString(undefined, {
+                        maximumFractionDigits: precision,
+                      });
+                      return (
+                        <div key={startIdx + i} className="flex justify-between items-center p-2 rounded border border-border">
+                          <Link to={`/asset/${asset?.symbol ?? bal.asset_id}`} className="text-primary hover:underline font-medium">
+                            {asset?.symbol ?? bal.asset_id}
+                          </Link>
+                          <span className="font-mono">{amount}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {totalBalancePages > 1 && (
+                    <div className="mt-4">
+                      <HistoryPagination currentPage={clampedBalancePage} totalPages={totalBalancePages} onPageChange={setBalancePage} />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
