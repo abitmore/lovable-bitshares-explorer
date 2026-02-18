@@ -114,17 +114,22 @@ export default function AccountPage() {
           </Card>
 
           {balances && balances.length > 0 && (() => {
-            const totalBalancePages = Math.ceil(balances.length / BALANCE_PAGE_SIZE);
+            const filteredBalances = balances.filter((bal: any) => {
+              const asset = assets?.find((a: any) => a.id === bal.asset_id);
+              return Number(bal.amount) !== 0 || asset?.symbol === "BTS" || bal.asset_id === "1.3.0";
+            });
+            if (filteredBalances.length === 0) return null;
+            const totalBalancePages = Math.ceil(filteredBalances.length / BALANCE_PAGE_SIZE);
             const clampedBalancePage = Math.min(balancePage, totalBalancePages);
             const startIdx = (clampedBalancePage - 1) * BALANCE_PAGE_SIZE;
-            const pagedBalances = balances.slice(startIdx, startIdx + BALANCE_PAGE_SIZE);
+            const pagedBalances = filteredBalances.slice(startIdx, startIdx + BALANCE_PAGE_SIZE);
             return (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">Balances</CardTitle>
-                    {balances.length > BALANCE_PAGE_SIZE && (
-                      <span className="text-sm text-muted-foreground">{balances.length} assets</span>
+                    {filteredBalances.length > BALANCE_PAGE_SIZE && (
+                      <span className="text-sm text-muted-foreground">{filteredBalances.length} assets</span>
                     )}
                   </div>
                 </CardHeader>
