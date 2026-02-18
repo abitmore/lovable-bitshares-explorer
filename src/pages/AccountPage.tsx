@@ -107,7 +107,7 @@ export default function AccountPage() {
               <InfoRow label="ID" value={account.id} />
               <InfoRow label="Registrar" value={nameMap.get(account.registrar) ?? account.registrar} link={`/account/${nameMap.get(account.registrar) ?? account.registrar}`} />
               <InfoRow label="Referrer" value={nameMap.get(account.referrer) ?? account.referrer} link={`/account/${nameMap.get(account.referrer) ?? account.referrer}`} />
-              <InfoRow label="Membership Expiration" value={account.membership_expiration_date?.replace("T", " ")} />
+              <InfoRow label="Membership" value={account.membership_expiration_date?.startsWith("1970-01-01") ? "Basic Member" : "Lifetime Member"} />
             </CardContent>
           </Card>
 
