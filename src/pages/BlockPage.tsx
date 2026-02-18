@@ -79,16 +79,14 @@ export default function BlockPage() {
                     className="block p-3 border border-border rounded-lg hover:bg-accent transition-colors"
                   >
                     <div className="flex justify-between items-center">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-mono text-sm text-primary">TX #{idx}</span>
-                        {txIds?.[idx] && (
-                          <span className="font-mono text-xs text-muted-foreground">{txIds[idx]}</span>
-                        )}
-                      </div>
+                      <span className="font-mono text-sm text-primary">TX #{idx}</span>
                       <span className="text-sm text-muted-foreground">
-                        {tx.operations?.length ?? 0} operations
+                        {tx.operations?.length ?? 0} op{(tx.operations?.length ?? 0) !== 1 ? "s" : ""}
                       </span>
                     </div>
+                    {txIds?.[idx] && (
+                      <span className="font-mono text-xs text-muted-foreground break-all mt-1 block">{txIds[idx]}</span>
+                    )}
                   </Link>
                 ))}
               </CardContent>
