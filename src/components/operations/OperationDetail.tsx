@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AccountLink, AssetAmount, ObjectId, DetailRow } from "./OperationHelpers";
@@ -62,14 +63,23 @@ export function OperationDetail({ opType, opData, accounts, assets }: {
       );
 
     // 5: Account Create
-    case 5:
+    case 5: {
+      const showReferrer = opData.referrer && opData.referrer !== opData.registrar;
       return (
         <div className="text-sm">
           <AccountLink id={opData.registrar} accounts={accounts} />
           <span className="text-muted-foreground"> registered </span>
-          <span className="font-semibold">{opData.name}</span>
+          <Link to={`/account/${opData.name}`} className="text-primary hover:underline font-semibold">{opData.name}</Link>
+          {showReferrer && (
+            <>
+              <span className="text-muted-foreground"> (referrer: </span>
+              <AccountLink id={opData.referrer} accounts={accounts} />
+              <span className="text-muted-foreground">)</span>
+            </>
+          )}
         </div>
       );
+    }
 
     // 6: Account Update
     case 6:
